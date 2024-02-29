@@ -13,33 +13,38 @@ function gameBoardModule () {
     const winCheck = (x, y, player) => {
         let boardSize = theBoard.length - 1;
         //Horizontal win check
-        //return theBoard[x].every(element => element === checkElement);
         if (theBoard[x].every(element => element === player)){
-            console.log("win");
-        }
-        for(let vert = 0; vert <= boardSize; vert++){
-            console.log(`X:${x}, Y:${vert}, Value: ${theBoard[vert][x]}, Expected: ${player}`);
-            if(theBoard[vert][x] != player){
-                console.log("Non match detected. Breaking.");
-                break;
-            }else if(vert === boardSize){
-                console.log("win")
-            }
+            return true;
         }
         //Vertical win check
-        // for(let x = 0; x < boardSize; x++){
-            
-        // }
+        for(let i = 0; i <= boardSize; i++){
+            if(theBoard[i][x] != player){
+                break;
+            }else if(i === boardSize){
+                console.log("win")
+                return true;
+            }
+        }
+        //Diagonal win check
+        if(x === y){
+            for(let i = 0; i <= boardSize; i++){
+                if(theBoard[i][i] != player){
+                    break;
+                }else if(i === boardSize){
+                    console.log("win")
+                    return true;
+                }
+            }
+        }
     }
 
     const markBoard = (x, y, player) => {
         theBoard[y][x] === false && (theBoard[y][x] = player);
-        winCheck(x, y, player);
     };
     
     const printBoard = () => theBoard;
 
-    return {initBoard, printBoard, markBoard};
+    return {initBoard, printBoard, markBoard, winCheck};
 }
 
 function playersModule () {
@@ -64,24 +69,48 @@ function playersModule () {
 function gameController (size = 3) {
     const board = gameBoardModule();
     const players = playersModule();
+    const gameHolder = document.getElementById("gameHolder");
+    let gameLock = false;
 
     board.initBoard(size);
     players.getStartPlayer();
+        
+    const playTurn = (x, y) => {
+        if(gameLock === false){
+            board.markBoard(x, y, players.getCurrentPlayer());
+            if(board.winCheck(x, y, players.getCurrentPlayer())){
+                gameLock = true;
+            }else{
+                players.switchPlayers();
+                
+            }
+            console.log(board.printBoard());
+        }
+    }
+
+    const createGui = (size) => {
+        for(let i = 0; i <= size; i++){
+            for(let n = 0; i <= size; n++){
+                let newSquare = document.createElement('div');
+                newSquare.className = "boxes";
+                //newSquare.id = `x${x}y${y}`;
+                newSquare.addEventListener("onclick", (event) => {
+                    board.playTurn();
+                });
+                gameHolder.appendChild(newSquare);
+            }
+        }
+    }
 
     const newGame = (size) => {
         board.initBoard(size);
         players.getStartPlayer();
         console.log(board.printBoard());
-    }
-        
-    const playTurn = (x, y) => {
-        board.markBoard(x, y, players.getCurrentPlayer());
-        players.switchPlayers();
-        console.log(board.printBoard());
+        gameLock = false;
     }
   
     return {playTurn, newGame};
 }
 
 const test = gameController(3);
-console.log(test);
+//console.log(test);
