@@ -1,6 +1,8 @@
 function gameBoardModule () {
     const theBoard = [];
 
+    //Generate board rows and cells. Each cell starts as false.
+    //Can scale from 3x3 to any number.
     const initBoard = (size) => { 
         for(let x = 0; x < size; x++){
             theBoard[x] = [];
@@ -36,6 +38,7 @@ function gameBoardModule () {
         }
     }
 
+    //Mark spot if it's empty. Otherwise do nothing.
     const markBoard = (x, y, player) => {
         theBoard[y][x] === false && (theBoard[y][x] = player);
     };
@@ -48,6 +51,8 @@ function gameBoardModule () {
 function playersModule () {
     const player1 = "X";
     const player2 = "O";
+    
+    //On initialization randomizes the starting player.
     let currentPlayer;
     const randomNumber = Math.floor(Math.random() * 2);
 
@@ -61,6 +66,7 @@ function playersModule () {
 
     const getCurrentPlayer = () => currentPlayer;
 
+    //Randomizes starting player on launch.
     getStartPlayer();
 
     return {getStartPlayer, switchPlayers, getCurrentPlayer};
@@ -68,6 +74,9 @@ function playersModule () {
 
 function guiModule (playerData, lockData) {
     const gameHolder = document.getElementById("gameHolder");
+    //Player data (specifically for current player)
+    //and game data (specifically if game is locked)
+    //passed to GUI.
     const players = playerData;
     const lockCheck = lockData;
     
@@ -75,12 +84,17 @@ function guiModule (playerData, lockData) {
         square.classList.add(`player-${players.getCurrentPlayer()}`);
     }
 
+    //Generates board via size. Also passed is turn handling/execution
+    //from the main game handler.
     const generateBoard = (size, func) => {
         for(let y = 0; y < size; y++){
             for(let x = 0; x < size; x++){
                 let newSquare = document.createElement('div');
+                //Sets X/Y data to each square so on click that data can be used to mark/score.
                 newSquare.setAttribute("x-value", x);
                 newSquare.setAttribute("y-value", y);
+                newSquare.style.height = `${100 / size}%`;
+                newSquare.style.width = `${100 / size}%`;
                 newSquare.addEventListener("click", (event) => {
                     if(!lockCheck()){
                         markBoard(event.target);
@@ -99,21 +113,22 @@ function gameController (size = 3) {
     const board = gameBoardModule();
     const players = playersModule();
     
+    //Game is initially unlocked and a function to properly return it from the main state.
     let gameLock = false;
     const lockStatus = () => gameLock;
 
+    //GUI initialized and player and lock data passed to it.
     const gui = guiModule(players, lockStatus);
 
+    //Turn function. Places pieces and checks victory conditions. Switches player after placement.
     const playTurn = (x, y) => {
         if(gameLock === false){
             board.markBoard(x, y, players.getCurrentPlayer());
             if(board.winCheck(x, y, players.getCurrentPlayer())){
-                console.log("Yes");
+                console.log("Win");
                 gameLock = true;
-                console.log(gameLock);
             }else{
                 players.switchPlayers();
-                console.log(board.printBoard());
             }
         }
     }
