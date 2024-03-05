@@ -74,14 +74,25 @@ function playersModule () {
 
 function guiModule (playerData, lockData) {
     const gameHolder = document.getElementById("gameHolder");
+    const promptHolder = document.getElementById("promptOverlay");
     //Player data (specifically for current player)
     //and game data (specifically if game is locked)
     //passed to GUI.
+    let player1Name;
+    let player2Name;
     const players = playerData;
     const lockCheck = lockData;
     
     const markBoard = (square) => {
         square.classList.add(`player-${players.getCurrentPlayer()}`);
+    }
+
+    const wipeBoard = () => {
+        gameHolder.innerHTML = '';
+    }
+
+    const deletePrompt = () => {
+        promptHolder.classList.remove('display');
     }
 
     //Generates board via size. Also passed is turn handling/execution
@@ -106,7 +117,68 @@ function guiModule (playerData, lockData) {
         }
     }
 
-    return {generateBoard};
+    const createPrompt = (func, turn) => {
+        promptHolder.classList.add('display');
+        let newPrompt = document.createElement('div');
+        newPrompt.innerHTML = `
+            <form action="#" method="post" id="createGameForm">
+                <div class="formContent">
+                    <h2>Would you like to play a game?</h2>
+                    <div class="infoHolder">
+                        <label for="player1Name">Player 1:</label>
+                        <input type="text" name="player1Name" id="player1Name" required/>
+                    </div>
+                    <div class="infoHolder">
+                        <label for="player2Name">Player 2:</label>
+                        <input type="text" name="player2Name" id="player2Name" required/>
+                    </div>
+                    <div class="infoHolder">
+                        <label for="gameSize">Board Size:</label>
+                        <input type="number" name="gameSize" id="gameSize" required/>
+                    </div>
+                    <button id="submitButton">Create Game</button>
+                </div>
+            </form>
+        `;
+        promptHolder.addEventListener("submit", (event) => {
+            event.preventDefault();
+            let gameSize = document.getElementById('gameSize').value; 
+            player1Name = document.getElementById('player1Name').value;
+            player2Name = document.getElementById('player2Name').value;
+            func(gameSize);
+            generateBoard(gameSize, turn);
+            deletePrompt();
+        });
+        promptHolder.appendChild(newPrompt);
+    }
+
+    const createAgainPrompt = (func, turn) => {
+        promptHolder.innerHTML = '';
+        promptHolder.classList.add('display');
+        let newPrompt = document.createElement('div');
+        newPrompt.innerHTML = `
+            <form action="#" method="post" id="createGameForm">
+                <div class="formContent">
+                    <h2>Congratulations, ${players.getCurrentPlayer()}, play again?</h2>
+                    <div class="infoHolder">
+                        <label for="gameSize">Board Size:</label>
+                        <input type="number" name="gameSize" id="gameSize" required/>
+                    </div>
+                    <button id="submitButton">Create Game</button>
+                </div>
+            </form>
+        `;
+        promptHolder.addEventListener("submit", (event) => {
+            event.preventDefault();
+            let gameSize = document.getElementById('gameSize').value; 
+            func(gameSize);
+            generateBoard(gameSize, turn);
+            deletePrompt();
+        });
+        promptHolder.appendChild(newPrompt);
+    }
+
+    return {generateBoard, createPrompt, createAgainPrompt, wipeBoard};
 }
 
 function gameController (size = 3) {
@@ -126,6 +198,8 @@ function gameController (size = 3) {
             board.markBoard(x, y, players.getCurrentPlayer());
             if(board.winCheck(x, y, players.getCurrentPlayer())){
                 console.log("Win");
+                //gui.wipeBoard();
+                gui.createAgainPrompt(board.initBoard, playTurn);
                 gameLock = true;
             }else{
                 players.switchPlayers();
@@ -139,13 +213,17 @@ function gameController (size = 3) {
         console.log(board.printBoard());
         gameLock = false;
     }
+
+    const createGame = () => {
+        gui.createPrompt(board.initBoard, playTurn)
+    }
   
 
-    board.initBoard(size);
-    gui.generateBoard(size, playTurn);
+    // board.initBoard(size);
+    // gui.generateBoard(size, playTurn);
 
-    return {playTurn, newGame};
+    return {playTurn, newGame, createGame};
 }
 
-const test = gameController(3);
-//console.log(test);
+const test = gameController();
+test.createGame();
